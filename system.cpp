@@ -10,11 +10,10 @@
 #include <armadillo>
 #define _USE_MATH_DEFINES
 
-
-
 // include headers
 #include "system.hpp"
 #include "planet.hpp"
+
 
  arma::vec System::compute_acceleration(int i){
     // 
@@ -37,6 +36,7 @@
 
     return a; 
  }
+
  double System::compute_energy(){
     double E_kin = 0;
     double E_pot = 0;
@@ -62,6 +62,7 @@
     return E_kin + E_pot;
  }
 
+// shifts the coordinate system into the CM
 void System::coord_transf(){
     arma::vec r_cm = arma::vec(3).fill(0.);
     arma::vec v_cm = arma::vec(3).fill(0.);
@@ -92,7 +93,7 @@ void System::coord_transf(){
     }
     return L;
  }
-
+// Evolve the system by one time step, h, using Euler
 void System::evolveEuler(double h){
     std::vector<Planet> evolved_planets; 
     arma::vec r_new = arma::vec(3);
@@ -100,16 +101,20 @@ void System::evolveEuler(double h){
     Planet p; 
 
     for (int j = 0; j < planets.size() ; j++){
+        // dr/dt = v ==> r_j+i = r_j + h*v_ij
         r_new = planets.at(j).r + planets.at(j).v * h;
+        // dv/dt = a  ==>  v_j+1 = v_j + h*a_j
         v_new = planets.at(j).v + h * compute_acceleration(j);
+        // save changes in new state of the particle
         p.r = r_new;
         p.v = v_new;
         p.m = planets.at(j).m;
+         // append the particle at t+dt at the end of the new vector
         evolved_planets.push_back(p);
     }
     planets = evolved_planets;
 }
-
+// add a planet to the system specifying r, v, m 
 void System::add_planet(double m, arma::vec r, arma::vec v){
      Planet p; 
      p.r = r;
@@ -117,7 +122,7 @@ void System::add_planet(double m, arma::vec r, arma::vec v){
      p.m = m;
      planets.push_back(p);
 }
-
+// set initial conditions of two planets in  kepler orbit
 void System::initialize_kepler_orbit(double e, double a, double m1, double m2){
         arma::vec r = arma::vec(3);
         arma::vec v = arma::vec(3);
