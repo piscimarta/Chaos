@@ -55,7 +55,7 @@
              E_pot += 0;
     }
         else{
-             E_pot += G*planets.at(j).m*planets.at(i).m/(r);
+             E_pot -= G*planets.at(j).m*planets.at(i).m/(r);
     }
     }
     }
@@ -87,12 +87,33 @@ void System::coord_transf(){
 
  arma::vec System::compute_spec_ang_mom(){
     arma::vec L = arma::vec(3).fill(0.);
-
-    for (int i = 0 ; i < planets.size() ; i++){
-        L += arma::cross(planets.at(i).r, planets.at(i).v);
-    }
+    L = arma::cross((planets.at(0).r-planets.at(1).r), (planets.at(0).v - planets.at(1).v));
     return L;
  }
+
+  double System::compute_eccentricity(){
+    arma::vec e = arma::vec(3).fill(0.);
+    // def rij
+    arma::vec rij = planets.at(0).r - planets.at(1).r;
+    // def vij
+    arma::vec vij = planets.at(0).v - planets.at(1).v;
+    // norm of rij
+    double r = norm(rij);
+    e = (arma::cross(vij, compute_spec_ang_mom()))/(G*(planets.at(0).m+planets.at(1).m)) - (rij)/r;
+    return norm(e);
+ }
+
+double System::compute_semi_maj_ax(){
+    double a = 0;
+    double M = 0;
+    double j = 0;
+    double e = 0;
+    M = planets.at(0).m - planets.at(1).m;
+    j = norm(compute_spec_ang_mom());
+    e = compute_eccentricity();
+    a = (j*j/(G*M))/(1-e*e);
+     return a;
+}
 // Evolve the system by one time step, h, using Euler
 void System::evolveEuler(double h){
     std::vector<Planet> evolved_planets; 

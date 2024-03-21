@@ -24,6 +24,8 @@ public:
     double compute_energy();
     void coord_transf(); 
     arma::vec compute_spec_ang_mom();
+    double compute_eccentricity();
+    double compute_semi_maj_ax();
     void evolveEuler(double h);
     void add_planet(double m, arma::vec r, arma::vec v);
     void initialize_kepler_orbit(double e, double a, double m1, double m2);

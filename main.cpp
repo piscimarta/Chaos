@@ -9,14 +9,22 @@
 int main(){
 
 // 
-double h = 2*M_PI/10000;
-int iter = 100000;
+double h = 2*M_PI/50000;
+int iter = 0;
+double t_max = 10*2*M_PI;
+
 
 // planet parameters 
 double m1 = 1;
 double m2 = 1e-3;
 double e = 0.5;
 double a = 1;
+
+// system parameters
+double j = 0;
+
+
+iter = (int) t_max/h;
 
 // printing parameters
 double width = 7;
@@ -28,9 +36,10 @@ System Sosy;
 Sosy.initialize_kepler_orbit(e, a, m1 ,m2);
 Sosy.coord_transf();
 
+
 // open file .txt to save data
 std::ofstream ofile;
-ofile.open("test3.txt");
+ofile.open("test.txt");
 
 // save to file data: t p1 x_1 y_1 z_1 vx_1 vy_1 vz_1 p2 x_2 y_2 z_2 vx_2 vy_2 vz_2
 for(int i = 0; i < iter ; i++){
@@ -46,7 +55,11 @@ for(int i = 0; i < iter ; i++){
                     << " " << scientific_format(Sosy.planets.at(i_planet).v(2), width, prec);
 
     }
-    ofile << std::endl;
+    ofile  << " "<< scientific_format(Sosy.compute_eccentricity(), width, prec);
+    ofile  << " "<< scientific_format(Sosy.compute_energy(), width, prec);
+    ofile  << " "<< scientific_format(Sosy.compute_semi_maj_ax(), width, prec);
+    ofile  << " "<< scientific_format(norm(Sosy.compute_spec_ang_mom()), width, prec);
+    ofile  << std::endl;
 
    // Evolve the system with Euler 
    Sosy.evolveEuler(h);
