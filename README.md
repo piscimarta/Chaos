@@ -17,7 +17,7 @@ git clone git@github.com:piscimarta/Chaos.git
 You can compile and link with `g++`.
 
 ```bash
-g++ main.cpp /*.cpp -I include -larmadillo -o main
+g++ *.cpp -I include -larmadillo -o main
 ```
 You might need to add the  `-std=gnu++11` if you are a Mac user.
 You can then run the executable with
