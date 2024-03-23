@@ -46,7 +46,7 @@
 
         E_kin += 0.5*planets.at(i).m*v_norm*v_norm;
 
-        for (int j = 0 ; j < planets.size() ; j++){
+        for (int j = i+1 ; j < planets.size() ; j++){
             // def rij
             arma::vec rij = planets.at(j).r - planets.at(i).r;
             // norm of rij
