@@ -9,7 +9,7 @@
 int main(){
 
 // 
-double h = 2*M_PI/50000;
+double h = 2*M_PI/500;
 int iter = 0;
 double t_max = 10*2*M_PI;
 
@@ -39,7 +39,7 @@ Sosy.coord_transf();
 
 // open file .txt to save data
 std::ofstream ofile;
-ofile.open("test.txt");
+ofile.open("test0.txt");
 
 // save to file data: t p1 x_1 y_1 z_1 vx_1 vy_1 vz_1 p2 x_2 y_2 z_2 vx_2 vy_2 vz_2
 for(int i = 0; i < iter ; i++){
@@ -62,7 +62,7 @@ for(int i = 0; i < iter ; i++){
     ofile  << std::endl;
 
    // Evolve the system with Euler 
-   Sosy.evolveEuler(h);
+   Sosy.evolve_RK4(h);
     
 }
     // close file

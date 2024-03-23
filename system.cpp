@@ -158,3 +158,68 @@ void System::initialize_kepler_orbit(double e, double a, double m1, double m2){
         planets.at(1).v(1) = sqrt((G*(m1 + m2)/a)*((1-e)/(1+e)));
         planets.at(1).v(2) = 0;
     }
+
+    void System::evolve_RK4(double h){
+        std::vector<arma::vec> K1_r_all(planets.size());
+        std::vector<arma::vec> K1_v_all(planets.size());
+        std::vector<arma::vec> K2_r_all(planets.size());
+        std::vector<arma::vec> K2_v_all(planets.size());
+        std::vector<arma::vec> K3_r_all(planets.size());
+        std::vector<arma::vec> K3_v_all(planets.size());
+        std::vector<arma::vec> K4_r_all(planets.size());
+        std::vector<arma::vec> K4_v_all(planets.size());
+
+        std::vector<Planet> initial_state = planets;
+        std::vector<Planet> final_state = planets;
+        //k1
+        for (int i = 0; i < planets.size() ; i++){
+            K1_r_all.at(i) = planets.at(i).v;
+            K1_v_all.at(i) = compute_acceleration(i);
+        }
+
+        //k2
+        for(int i = 0; i < planets.size(); i++){
+            planets.at(i).r += 0.5*h*K1_r_all.at(i); 
+            planets.at(i).v += 0.5*h*K1_v_all.at(i);
+        }
+        //evolveEuler(0.5*h);
+
+        for( int i = 0; i < planets.size(); i++){
+            K2_r_all.at(i) = planets.at(i).v;
+            K2_v_all.at(i) = compute_acceleration(i);
+        }
+        
+        planets = initial_state;
+
+        //k3
+        for(int i = 0; i < planets.size(); i++){
+            planets.at(i).r += 0.5*h*K2_r_all.at(i); 
+            planets.at(i).v += 0.5*h*K2_v_all.at(i);
+        }
+        //evolveEuler(0.5*h);
+
+        for( int i = 0; i < planets.size(); i++){
+            K3_r_all.at(i) = planets.at(i).v;
+            K3_v_all.at(i) = compute_acceleration(i);
+        }
+
+        planets = initial_state;
+
+        //k4
+        for(int i = 0; i < planets.size(); i++){
+            planets.at(i).r += h*K3_r_all.at(i); 
+            planets.at(i).v += h*K3_v_all.at(i);
+        }
+        //evolveEuler(h);
+
+        for( int i = 0; i < planets.size(); i++){
+            K4_r_all.at(i) = planets.at(i).v;
+            K4_v_all.at(i) = compute_acceleration(i);
+        }
+
+        for( int i = 0; i < planets.size(); i++){
+            final_state.at(i).r = initial_state.at(i).r + (h/6)*(K1_r_all.at(i) + 2*K2_r_all.at(i) + 2*K3_r_all.at(i) + K4_r_all.at(i));
+            final_state.at(i).v = initial_state.at(i).v + (h/6)*(K1_v_all.at(i) + 2*K2_v_all.at(i) + 2*K3_v_all.at(i) + K4_v_all.at(i));
+        }
+        planets = final_state;
+    }
