@@ -34,4 +34,10 @@ std::string scientific_format(const std::vector<double> &v, const int &width, co
 }
 
 
+std::string int_to_str(int d){
+    std::stringstream s;
+    s<<d;
+    return s.str();
+}
+
 
