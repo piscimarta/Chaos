@@ -32,7 +32,7 @@ public:
     double compute_semi_maj_ax();
     double compute_eccentricity();
     void evolve_RK4(double h);
-    double adaptive_time_step(double eta, double dt_eta);
+    double adaptive_time_step(double eta, double h);
 };
 
 

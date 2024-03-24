@@ -18,6 +18,8 @@ public:
     double m;
     arma::vec r = arma::vec(3);
     arma::vec v = arma::vec(3);
+    arma::vec a_prev = arma::vec(3);
+    //save a planets previous acceleration in the planet class
 
     // add Constructors  ...    
 

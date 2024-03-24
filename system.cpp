@@ -155,6 +155,10 @@ void System::evolveEuler(double h){
         v_new = planets.at(j).v + h * compute_acceleration(j);
         // dr/dt = v ==> r_j+1 = r_j + h*v_ij
         r_new = planets.at(j).r + planets.at(j).v * h;
+        planets.at(j).a_prev = compute_acceleration(j);
+        //save the previous accel. before updating the positions
+        //we need prev. acc to access it for the adaptable time_step, 
+        //implement this for all the other evolve.. aswell!!!!!!!
         planets.at(j).r = r_new;
         planets.at(j).v = v_new;
     }
@@ -372,22 +376,35 @@ void System::initialize_kepler_orbit(double e, double a, double m1, double m2){
         planets.at(1).v(0) = 0;
         planets.at(1).v(1) = sqrt((G*(m1 + m2)/a)*((1-e)/(1+e)));
         planets.at(1).v(2) = 0;
+
+        //initialize prev_accel as 0
+        planets.at(0).a_prev = arma::vec(3).fill(0.);
+        planets.at(1).a_prev = arma::vec(3).fill(0.);
+
     }
-double System::adaptive_time_step(double eta, double dt_eta){
+
+double System::adaptive_time_step(double eta, double h){
+    //constant eta
+    //prev. timestep h
     double min = 10000000000;
+    //arbitrarly high number
     for(int j= 0; j<planets.size(); j++){
-        double abs_a_dot_over_a;
+        double abs_a_over_a_dot;
         double a_dot;
         double a;
-        //wie a_dot berechnen? brauche vorigen Wert für r von allen Planeten
+        //how to calculate a_dot
         //we need to save the previous pos from every single simulation step 
+        a_dot = norm(  (compute_acceleration(j)//System 
+                        -planets.at(j).a_prev //System_prev )
+                     )/h );
+                     //diff. quotient of a 
         
         a = norm(compute_acceleration(j));
-        abs_a_dot_over_a = abs(a/a_dot);
-        if (eta*abs_a_dot_over_a <min){
-            min=eta*abs_a_dot_over_a; 
+        abs_a_over_a_dot = abs(a/a_dot);
+        if (eta*abs_a_over_a_dot <min){
+            min=eta*abs_a_over_a_dot; 
         }
     } 
     return min;
-
+    //right the timestep becomes massive at eta=3
 }
