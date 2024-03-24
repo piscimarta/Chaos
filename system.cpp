@@ -118,131 +118,130 @@ void System::coord_transf(){
     return norm(e);
  }
 
- 
-// //Evolve the system by one time step, h, using Euler
-// void System::evolveEuler(double h){
-//     std::vector<Planet> evolved_planets; 
-//     arma::vec r_new = arma::vec(3);
-//     arma::vec v_new = arma::vec(3);
-//     Planet p; 
-
-//     for (int j = 0; j < planets.size() ; j++){
-//         // dv/dt = a  ==>  v_j+1 = v_j + h*a_j
-//         v_new = planets.at(j).v + h * compute_acceleration(j);
-//         // dr/dt = v ==> r_j+i = r_j + h*v_ij
-//         r_new = planets.at(j).r + planets.at(j).v * h;
-        
-//         // save changes in new state of the particle
-//         p.r = r_new;
-//         p.v = v_new;
-//         p.m = planets.at(j).m;
-//          // append the particle at t+dt at the end of the new vector
-//         evolved_planets.push_back(p);
-//     }
-//     planets = evolved_planets;
-// }
 
 
-//second, shorter version of Euler
 void System::evolveEuler(double h){
-    // std::vector<Planet> evolved_planets; 
+    std::vector<Planet> evolved_planets;
+    Planet p; 
     arma::vec r_new = arma::vec(3);
     arma::vec v_new = arma::vec(3);
-    //Planet p; 
+        arma::vec a = arma::vec(3);
+        
+    //save accel. so we do not need to calculate it twice 
 
     for (int j = 0; j < planets.size() ; j++){
         // dv/dt = a  ==>  v_j+1 = v_j + h*a_j
-        v_new = planets.at(j).v + h * compute_acceleration(j);
+        a= compute_acceleration(j);
+        v_new = planets.at(j).v + h * a;
         // dr/dt = v ==> r_j+1 = r_j + h*v_ij
         r_new = planets.at(j).r + planets.at(j).v * h;
-        planets.at(j).a_prev = compute_acceleration(j);
+        p.a_prev = a;
         //save the previous accel. before updating the positions
         //we need prev. acc to access it for the adaptable time_step, 
         //implement this for all the other evolve.. aswell!!!!!!!
-        planets.at(j).r = r_new;
-        planets.at(j).v = v_new;
+        p.r = r_new;
+        p.v = v_new;
+        p.m = planets.at(j).m;
+        evolved_planets.push_back(p);
     }
+    planets = evolved_planets;
+    //save the system in evolved planets bc we need the previous positions for a
+    //then later update all planets at the same time
+
 }
 
-// void System::evolveEulerCromer(double h){
-//     std::vector<Planet> evolved_planets; 
-//     arma::vec r_new = arma::vec(3);
-//     arma::vec v_new = arma::vec(3);
-//     Planet p; 
 
-//     for (int j = 0; j < planets.size() ; j++){
-//         // dv/dt = a  ==>  v_j+1 = v_j + h*a_j
-//         v_new = planets.at(j).v + h * compute_acceleration(j);
-//         // save changes in new state of the particle
-//         p.v =v_new;
-//         // dr/dt = v ==> r_j+1 = r_j + h*v_(j+1)!!
-//         r_new = planets.at(j).r + v_new * h;
-//         //                         alt.  v_new 
-//         //only difference to euler is that v is updated before we calculate r
-        
-//         p.r = r_new;
-//         p.m = planets.at(j).m;
-//          // append the particle at t+dt at the end of the new vector
-//         evolved_planets.push_back(p);
-//     }
-//     planets = evolved_planets;
-// }
 
-//more compact EulerCromer
+
 void System::evolveEulerCromer(double h){
-    //std::vector<Planet> evolved_planets; 
+    std::vector<Planet> evolved_planets;
+    Planet p; 
     arma::vec r_new = arma::vec(3);
     arma::vec v_new = arma::vec(3);
+    arma::vec a = arma::vec(3);
     //Planet p; 
 
     for (int j = 0; j < planets.size() ; j++){
         // dv/dt = a  ==>  v_j+1 = v_j + h*a_j
-        v_new = planets.at(j).v + h * compute_acceleration(j);
+        a= compute_acceleration(j);
+        v_new = planets.at(j).v + h * a;
         // dr/dt = v ==> r_j+1 = r_j + h*v_ij
-        planets.at(j).v = v_new;
-        r_new = planets.at(j).r + planets.at(j).v * h;
-        planets.at(j).r = r_new;
-        //only difference to Euler: v is updated before we calculate r   
+        p.v = v_new;
+        r_new = planets.at(j).r + v_new * h;
+        p.a_prev = a;
+        //save the previous accel. before updating the positions
+        //we need prev. acc to access it for the adaptable time_step, 
+
+        p.r = r_new;
+        p.m = planets.at(j).m;
+        evolved_planets.push_back(p);
+        //only difference to Euler: v is updated before we calculate r
     }
+    planets= evolved_planets;
 }
 
 
 void System::evolveLeapFrog(double h, int i, int N){
     //now we need the step i and the #total steps N bc the integration step depends on them
-    //std::vector<Planet> evolved_planets;
+    std::vector<Planet> evolved_planets;
+    Planet p;
     arma::vec r_new = arma::vec(3);
     arma::vec v_new =arma::vec(3);
-    //Planet p;
+    arma::vec a = arma::vec(3);
+
     //here we need separate loops for r & v bc we update them separately
 
     if (i==0){
+        //loop for updating r & a_prev
         for(int j = 0; j<planets.size(); j++){
+            a = compute_acceleration(j);
+            p.a_prev=a; 
+            //save a_0 as prev with actual values
             r_new = planets.at(j).r + planets.at(j).v * h/2;
             //r_1/2 = r_0 + v_0 *h/2        
             //r_1/2 = r[1] in array
             //update pos. first
-            planets.at(j).r = r_new;
-            //need to update all the planets positions first, then compute_acc
+            p.r = r_new;
+            p.v = planets.at(j).v;
+            p.m = planets.at(j).m;
+            evolved_planets.push_back(p);
+            //need to save the updated planets in intermediate vector bc otherwise it would change a_prev
         }
+        planets =evolved_planets;
+
+        //loop for updating v
         for(int j=0; j<planets.size(); j++){
-                                    // calc a_1/2 = a (t_1/2, r_1/2)
-            v_new = planets.at(j).v +compute_acceleration(j)*h;
+            // calc a_1/2 = a (t_1/2, r_1/2)
+            a= compute_acceleration(j);
+            v_new = planets.at(j).v +a*h;
             //v_1 = v_0 + a_(1/2) *h
             //now calculate velocities with updated coordinates
+            //here we also do not need intermediate steps
             planets.at(j).v =v_new;
         }
     }
         
     else if (i>0 && i<N-1){
+        //loop for r and a_prev
         for(int j =0; j<planets.size(); j++){
+            a= compute_acceleration(j);
+            p.a_prev = a;
+            //save the previous acc. before updating r
             r_new = planets.at(j).r + planets.at(j).v *h;
-            //r_(i-1/2) = r_(i-1-1/2) + v_(i-1)*h
+            //r_(i-1/2) = r_(i+1-1/2) + v_(i+1)*h
             //r_(i-1/2) = r[i] in array
-            planets.at(j).r = r_new;
+            p.r = r_new;
+            p.v = planets.at(j).v;
+            p.m = planets.at(j).m;
+            evolved_planets.push_back(p);
+            //need to save the updated planets in intermediate vector bc otherwise it would change a_prev
         }
+        planets = evolved_planets;
         //again: update all pos. first, then accel.->velocity
+        //loop for v
         for(int j =0; j<planets.size(); j++){
-            v_new = planets.at(j).v + compute_acceleration(j) *h;
+            a = compute_acceleration(j); //a_(i+1/2)
+            v_new = planets.at(j).v + a *h;
             //v_i = v_(i-1)         + a_(i-1/2) *h
             //v_i =v[i] in array
             planets.at(j).v = v_new;    
@@ -250,6 +249,8 @@ void System::evolveLeapFrog(double h, int i, int N){
     }
         
     else{  // i=N-1, last step, only pos update
+    //this condition is difficult to do with an adaptable timestep
+    //to calculate the timestep we need to calculate the acc
         for(int j=0; j<planets.size(); j++){
             r_new = planets.at(j).r + planets.at(j).v *h/2;
             //  //r_(n+1) = r_(n+1/2) + v_(n+1) * h/2

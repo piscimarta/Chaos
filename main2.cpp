@@ -10,12 +10,13 @@ int main(){
 
 
 int step_size_rel_to_orbit = 10000; //50000 
-double h = 2*M_PI/step_size_rel_to_orbit;
+double P = 2*M_PI; //Period P is 2pi for our settings
+double h = P/step_size_rel_to_orbit;
 //timestep h
 //even if timestep is adaptive, this is the initial step
 
 int num_orbits = 10;
-double t_max = num_orbits*2*M_PI;  //10*2pi = 10 orbits
+double t_max = num_orbits*P;  //10*2pi = 10 orbits
 
 int iter = (int) t_max/h;
 
@@ -39,12 +40,15 @@ double prec = 7;
 System Sosy;
 Sosy.initialize_kepler_orbit(e, a, m1 ,m2);
 Sosy.coord_transf();
-bool adaptive = true;
-//fixed time_step or adaptive?
-double eta = 0.001;
-//constant for calculation of adaptive time step
 
-std::string integrator = "Euler";
+
+double eta = 0.001;
+//constant for calculation of adaptive time step, could be dependent on Period P
+
+//fixed time_step or adaptive?
+bool adaptive = true;
+std::string integrator = "LeapFrog";
+//pay close attention to the spelling of the string
 // open file .txt to save data
 std::ofstream ofile;
 //ofile.open("test3.txt");
@@ -86,8 +90,20 @@ for(int i = 0; t<t_max; i++){
 
      //calculate variable time_step if appropriate
      if(t!=0){
+          double new_h;
           if (adaptive== true){
-               double new_h= Sosy.adaptive_time_step(eta, h);
+               if (integrator== "LeapFrog"){
+                    if(i==1){
+                         new_h= Sosy.adaptive_time_step(eta, h/2);
+                         //half a step in from 0th to first iteration in h          
+                    }
+                    else{
+                         new_h= Sosy.adaptive_time_step(eta, h);     
+                    }
+               }
+               else{
+                    new_h= Sosy.adaptive_time_step(eta, h);
+               }
                //calc. variable time step h
                if (new_h !=0){
                     if(new_h != eta/h){
@@ -109,7 +125,13 @@ for(int i = 0; t<t_max; i++){
         Sosy.evolveEulerCromer(h);
    }
    else if (integrator == "LeapFrog"){
-        Sosy.evolveLeapFrog(h, i, iter);
+          if(t+h > t_max){
+               Sosy.evolveLeapFrog(h, iter-1, iter);       
+          }
+          else{
+               Sosy.evolveLeapFrog(h, i, iter);
+          }
+        //ignore last step? gets pretty complicated
    }
    else if (integrator == "RK4"){
         Sosy.evolve_RK4(h);
