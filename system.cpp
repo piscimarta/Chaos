@@ -16,7 +16,7 @@
 
 
  arma::vec System::compute_acceleration(int i){
-    // 
+    //
     arma::vec a = arma::vec(3).fill(0.);
     arma::vec r_i = planets.at(i).r;
 
@@ -25,7 +25,7 @@
         arma::vec rij = planets.at(j).r - planets.at(i).r;
         // norm of rij
         double r = norm(rij);
-        
+
         if (i==j){
         a += arma::vec(3).fill(0.);
     }
@@ -34,7 +34,7 @@
     }
     }
 
-    return a; 
+    return a;
  }
 
   double System::compute_energy(){
@@ -68,15 +68,15 @@ void System::coord_transf(){
     arma::vec v_cm = arma::vec(3).fill(0.);
     arma::vec r_new = arma::vec(3);
     arma::vec v_new = arma::vec(3);
-    double M = 0; 
+    double M = 0;
 
     for (int j = 0 ; j < planets.size() ; j++){
         M += planets.at(j).m;
-    } 
+    }
     for (int j = 0 ; j < planets.size() ; j++){
         r_cm +=  (planets.at(j).m*planets.at(j).r)/M;
         v_cm +=  (planets.at(j).m*planets.at(j).v)/M;
-    } 
+    }
     for (int j = 0 ; j < planets.size() ; j++){
         r_new = planets.at(j).r - r_cm;
         v_new = planets.at(j).v - v_cm;
@@ -85,28 +85,22 @@ void System::coord_transf(){
    }
 }
 
- arma::vec System::compute_spec_ang_mom(){
-    arma::vec L = arma::vec(3).fill(0.);
 
-    for (int i = 0 ; i < planets.size() ; i++){
-        L += arma::cross(planets.at(i).r, planets.at(i).v);
-    }
+
+arma::vec System::compute_spec_ang_mom_2body(){
+    arma::vec L = arma::vec(3).fill(0.);
+    L = arma::cross((planets.at(0).r-planets.at(1).r), (planets.at(0).v - planets.at(1).v));
+    return L;
+ }
+ arma::vec System::compute_spec_ang_mom_3body(int j){ //for j=1 is m2; for j=2 is m3
+    arma::vec L = arma::vec(3).fill(0.);
+    L = arma::cross((planets.at(0).r-planets.at(j).r), (planets.at(0).v - planets.at(j).v));
     return L;
  }
 
- double System::compute_semi_maj_ax(){
-    double a = 0;
-    double M = 0;
-    double j = 0;
-    double e = 0;
-    M = planets.at(0).m - planets.at(1).m;
-    j = norm(compute_spec_ang_mom());
-    e = compute_eccentricity();
-    a = (j*j/(G*M))/(1-e*e);
-     return a;
-}
 
- double System::compute_eccentricity(){
+
+double System::compute_eccentricity_2body(){
     arma::vec e = arma::vec(3).fill(0.);
     // def rij
     arma::vec rij = planets.at(0).r - planets.at(1).r;
@@ -114,20 +108,80 @@ void System::coord_transf(){
     arma::vec vij = planets.at(0).v - planets.at(1).v;
     // norm of rij
     double r = norm(rij);
-    e = (arma::cross(vij, compute_spec_ang_mom()))/(G*(planets.at(0).m+planets.at(1).m)) - (rij)/r;
+    e = (arma::cross(vij, compute_spec_ang_mom_2body() )) /(G*(planets.at(0).m+planets.at(1).m)) - (rij)/r;
+    return norm(e);
+ }
+double System::compute_eccentricity_3body( int j){ //for j=1 is m2; for j=2 is m3
+    arma::vec e = arma::vec(3).fill(0.);
+    // def rij
+    arma::vec rij = planets.at(0).r - planets.at(j).r;
+    // def vij
+    arma::vec vij = planets.at(0).v - planets.at(j).v;
+    // norm of rij
+    double r = norm(rij);
+    e = (arma::cross(vij, compute_spec_ang_mom_3body(j) )) /(G*(planets.at(0).m+planets.at(j).m)) - (rij)/r;
     return norm(e);
  }
 
+ //1 replaced by index j(is 1 or 2)
+ //spec_ang_mom_func_replaced aswell + index 
+
+
+
+
+
+double System::compute_semi_maj_ax_2body(){
+    double a = 0;
+    double M = 0;
+    double j = 0;
+    double e = 0;
+    M = planets.at(0).m - planets.at(1).m;
+    j = norm(compute_spec_ang_mom_2body());
+    e = compute_eccentricity_2body();
+    a = (j*j/(G*M))/(1-e*e);
+     return a;
+}
+double System::compute_semi_maj_ax_3body(int i){  //j=1 ->m2, j=3 ->m3
+    double a = 0;
+    double M = 0;
+    double j = 0;
+    double e = 0;
+    M = planets.at(0).m - planets.at(i).m;
+    j = norm(compute_spec_ang_mom_3body(i));
+    e = compute_eccentricity_3body(i);
+    a = (j*j/(G*M))/(1-e*e);
+     return a;
+}
+//replace 1 by index i
+//replace ang_mom & ecc by their respective 3_body versions
+
+
+//  arma::vec System::compute_eccentricities(){
+//     arma::vec e_inn = arma::vec(3).fill(0.);
+//     arma::vec e = arma::vec(planets.size()-1);
+//     for(int i=1; i<planets.size(); i++){
+//         // is index over the two smaller planets
+//         // def rij
+//         arma::vec rij = planets.at(0).r - planets.at(i).r;
+//         // def vij
+//         arma::vec vij = planets.at(0).v - planets.at(i).v;
+//         // norm of rij
+//         double r = norm(rij);
+//         e_inn = (arma::cross(vij, compute_spec_ang_mom(i)))/(G*(planets.at(0).m+planets.at(i).m)) - (rij)/r;
+//         e[i-1] = norm(e_inn);
+//     }
+//     return e;
+//  }
 
 
 void System::evolveEuler(double h){
     std::vector<Planet> evolved_planets;
-    Planet p; 
+    Planet p;
     arma::vec r_new = arma::vec(3);
     arma::vec v_new = arma::vec(3);
         arma::vec a = arma::vec(3);
-        
-    //save accel. so we do not need to calculate it twice 
+
+    //save accel. so we do not need to calculate it twice
 
     for (int j = 0; j < planets.size() ; j++){
         // dv/dt = a  ==>  v_j+1 = v_j + h*a_j
@@ -137,7 +191,7 @@ void System::evolveEuler(double h){
         r_new = planets.at(j).r + planets.at(j).v * h;
         p.a_prev = a;
         //save the previous accel. before updating the positions
-        //we need prev. acc to access it for the adaptable time_step, 
+        //we need prev. acc to access it for the adaptable time_step,
         //implement this for all the other evolve.. aswell!!!!!!!
         p.r = r_new;
         p.v = v_new;
@@ -155,11 +209,11 @@ void System::evolveEuler(double h){
 
 void System::evolveEulerCromer(double h){
     std::vector<Planet> evolved_planets;
-    Planet p; 
+    Planet p;
     arma::vec r_new = arma::vec(3);
     arma::vec v_new = arma::vec(3);
     arma::vec a = arma::vec(3);
-    //Planet p; 
+    //Planet p;
 
     for (int j = 0; j < planets.size() ; j++){
         // dv/dt = a  ==>  v_j+1 = v_j + h*a_j
@@ -170,7 +224,7 @@ void System::evolveEulerCromer(double h){
         r_new = planets.at(j).r + v_new * h;
         p.a_prev = a;
         //save the previous accel. before updating the positions
-        //we need prev. acc to access it for the adaptable time_step, 
+        //we need prev. acc to access it for the adaptable time_step,
 
         p.r = r_new;
         p.m = planets.at(j).m;
@@ -195,10 +249,10 @@ void System::evolveLeapFrog(double h, int i, int N){
         //loop for updating r & a_prev
         for(int j = 0; j<planets.size(); j++){
             a = compute_acceleration(j);
-            p.a_prev=a; 
+            p.a_prev=a;
             //save a_0 as prev with actual values
             r_new = planets.at(j).r + planets.at(j).v * h/2;
-            //r_1/2 = r_0 + v_0 *h/2        
+            //r_1/2 = r_0 + v_0 *h/2
             //r_1/2 = r[1] in array
             //update pos. first
             p.r = r_new;
@@ -220,7 +274,7 @@ void System::evolveLeapFrog(double h, int i, int N){
             planets.at(j).v =v_new;
         }
     }
-        
+
     else if (i>0 && i<N-1){
         //loop for r and a_prev
         for(int j =0; j<planets.size(); j++){
@@ -244,10 +298,10 @@ void System::evolveLeapFrog(double h, int i, int N){
             v_new = planets.at(j).v + a *h;
             //v_i = v_(i-1)         + a_(i-1/2) *h
             //v_i =v[i] in array
-            planets.at(j).v = v_new;    
-        }   
+            planets.at(j).v = v_new;
+        }
     }
-        
+
     else{  // i=N-1, last step, only pos update
     //this condition is difficult to do with an adaptable timestep
     //to calculate the timestep we need to calculate the acc
@@ -264,7 +318,7 @@ void System::evolveLeapFrog(double h, int i, int N){
         //Iter = #Iterations =N
         //i goes from 0 to N-1
 
-        //r              a           v  
+        //r              a           v
         //r_0            -           v_0
         //r_1/2          a_1/2       -
         //-             -            v_1
@@ -275,19 +329,19 @@ void System::evolveLeapFrog(double h, int i, int N){
         //r_(N-2 +1/2)  a(N-2 +1/2)  -
         //r_(N-1)       -            v_(N-1)
 
-        
+
         //r_(N-1) = r_(N-2 +1/2) + v_(N-2) *h/2
         //v_(N-2) = v_(N-3) + a_(N-3 +1/2) *h
         //v_(N-1) = v_(N-2) + a_(N-2 +1/2) *h
 
 
 
-        //r: r_0, r_1/2, r_(1+1/2), ... r_(N-2 +1/2), r_(N-1)     #N+1 locations 
+        //r: r_0, r_1/2, r_(1+1/2), ... r_(N-2 +1/2), r_(N-1)     #N+1 locations
         //a:      a_1/2, a_(1+1/2), ... a_(N-2 +1/2)              #N-1 acc.
         //v: v_0,   v_1,       v_2, ... v_(N-1)                   #N   velocities
         //#:  0      1       2            N-1            N
 
-        //accel. don't need to be saved 
+        //accel. don't need to be saved
 
 
 void System::evolve_RK4(double h){
@@ -299,18 +353,21 @@ void System::evolve_RK4(double h){
         std::vector<arma::vec> K3_v_all(planets.size());
         std::vector<arma::vec> K4_r_all(planets.size());
         std::vector<arma::vec> K4_v_all(planets.size());
+        arma::vec a = arma::vec(3);
 
         std::vector<Planet> initial_state = planets;
         std::vector<Planet> final_state = planets;
         //k1
         for (int i = 0; i < planets.size() ; i++){
             K1_r_all.at(i) = planets.at(i).v;
-            K1_v_all.at(i) = compute_acceleration(i);
+            a= compute_acceleration(i);
+            K1_v_all.at(i) = a;
+            final_state.at(i).a_prev = a;
         }
 
         //k2
         for(int i = 0; i < planets.size(); i++){
-            planets.at(i).r += 0.5*h*K1_r_all.at(i); 
+            planets.at(i).r += 0.5*h*K1_r_all.at(i);
             planets.at(i).v += 0.5*h*K1_v_all.at(i);
         }
         //evolveEuler(0.5*h);
@@ -319,12 +376,12 @@ void System::evolve_RK4(double h){
             K2_r_all.at(i) = planets.at(i).v;
             K2_v_all.at(i) = compute_acceleration(i);
         }
-        
+
         planets = initial_state;
 
         //k3
         for(int i = 0; i < planets.size(); i++){
-            planets.at(i).r += 0.5*h*K2_r_all.at(i); 
+            planets.at(i).r += 0.5*h*K2_r_all.at(i);
             planets.at(i).v += 0.5*h*K2_v_all.at(i);
         }
         //evolveEuler(0.5*h);
@@ -338,7 +395,7 @@ void System::evolve_RK4(double h){
 
         //k4
         for(int i = 0; i < planets.size(); i++){
-            planets.at(i).r += h*K3_r_all.at(i); 
+            planets.at(i).r += h*K3_r_all.at(i);
             planets.at(i).v += h*K3_v_all.at(i);
         }
         //evolveEuler(h);
@@ -355,16 +412,18 @@ void System::evolve_RK4(double h){
         planets = final_state;
 }
 
-// add a planet to the system specifying r, v, m 
+
+
+// add a planet to the system specifying r, v, m
 void System::add_planet(double m, arma::vec r, arma::vec v){
-     Planet p; 
+     Planet p;
      p.r = r;
      p.v = v;
      p.m = m;
      planets.push_back(p);
 }
 // set initial conditions of two planets in  kepler orbit
-void System::initialize_kepler_orbit(double e, double a, double m1, double m2){
+void System::initialize_kepler_orbit_2body(double e, double a, double m1, double m2){
         arma::vec r = arma::vec(3);
         arma::vec v = arma::vec(3);
         add_planet(m1, r, v);
@@ -384,7 +443,40 @@ void System::initialize_kepler_orbit(double e, double a, double m1, double m2){
 
     }
 
-double System::adaptive_time_step(double eta, double h){
+void System::initialize_kepler_orbit_3body(double e, double a1, double a2, double m1, double m2, double m3){
+        arma::vec r = arma::vec(3);
+        arma::vec v = arma::vec(3);
+        add_planet(m1, r, v);
+        add_planet(m2, r, v);
+        add_planet(m2, r, v);
+        planets.at(0).r = arma::vec(3).fill(0.);
+        planets.at(0).v = arma::vec(3).fill(0.);
+
+        planets.at(1).r(0) = a1*(1+e);
+        planets.at(1).r(1) = 0;
+        planets.at(1).r(2) = 0;
+        planets.at(1).v(0) = 0;
+        planets.at(1).v(1) = sqrt((G*(m1 + m2)/a1)*((1-e)/(1+e)));
+        planets.at(1).v(2) = 0;
+
+        planets.at(2).r(0) = -a2*(1+e);
+        planets.at(2).r(1) = 0;
+        planets.at(2).r(2) = 0;
+        planets.at(2).v(0) = 0;
+        planets.at(2).v(1) = -sqrt((G*(m1 + m2)/a2)*((1-e)/(1+e)));
+        planets.at(2).v(2) = 0;
+
+        //change signs in coords & velocity to have them opposite of each other
+
+
+
+        //initialize prev_accel as 0
+        planets.at(0).a_prev = arma::vec(3).fill(0.);
+        planets.at(1).a_prev = arma::vec(3).fill(0.);
+
+    }
+
+double System::adaptive_time_step_diff_quot(double eta, double h){
     //constant eta
     //prev. timestep h
     double min = 10000000000;
@@ -394,18 +486,18 @@ double System::adaptive_time_step(double eta, double h){
         double a_dot;
         double a;
         //how to calculate a_dot
-        //we need to save the previous pos from every single simulation step 
-        a_dot = norm(  (compute_acceleration(j)//System 
+        //we need to save the previous pos from every single simulation step
+        a_dot = norm(  (compute_acceleration(j)//System
                         -planets.at(j).a_prev //System_prev )
                      )/h );
-                     //diff. quotient of a 
-        
+                     //diff. quotient of a
+
         a = norm(compute_acceleration(j));
         abs_a_over_a_dot = abs(a/a_dot);
         if (eta*abs_a_over_a_dot <min){
-            min=eta*abs_a_over_a_dot; 
+            min=eta*abs_a_over_a_dot;
         }
-    } 
+    }
     return min;
     //right the timestep becomes massive at eta=3
 }

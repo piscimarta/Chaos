@@ -2,7 +2,6 @@
 #include "planet.hpp"
 #include "system.hpp"
 #include "header.hpp"
-//include sth for M_PI
 
 // useful line for debugging:
 //std::cout << __FILE__ << __LINE__<< std::endl;
@@ -16,7 +15,7 @@ double h = P/step_size_rel_to_orbit;
 //timestep h
 //even if timestep is adaptive, this is the initial step
 
-int num_orbits = 10;
+int num_orbits = 10;  //should be 
 double t_max = num_orbits*P;  //10*2pi = 10 orbits
 
 int iter = (int) t_max/h;
@@ -26,11 +25,17 @@ int iter = (int) t_max/h;
 // planet parameters 
 double m1 = 1;
 double m2 = 1e-3;
-double e = 0.5;
-double a = 1;
+double mu2 = m2/m1;   //mass ratio
+double m3= 1e-5;
+double mu3 = m3/m1;
+double e = 0;
+double a1 = 1;
+double delta =0.01*a1;
+double a2 = a1 + delta;
+
 
 // system parameters
-double j = 0;
+double j = 0; //spec. ang mom, not needed in this exercise
 
 
 // printing parameters
@@ -39,7 +44,7 @@ double prec = 7;
 
 //@@ -28,9 +36,10 @@
 System Sosy;
-Sosy.initialize_kepler_orbit_2body(e, a, m1 ,m2);
+Sosy.initialize_kepler_orbit_3body(e, a1, a2, m1 , m2, m3);
 Sosy.coord_transf();
 
 
@@ -49,6 +54,7 @@ double eta = 0.001;
 //fixed time_step or adaptive?
 bool adaptive = true;
 std::string integrator = "RK4";
+//RK4 adaptive is not yet implemented
 //pay close attention to the spelling of the string
 // open file .txt to save data
 std::ofstream ofile;
@@ -56,12 +62,12 @@ std::ofstream ofile;
 std::string file_dir ="D:/drive dateien/Uni/Semester_7_WiSe23_24/Astro-F_Praktikum/Chaos/data/";
 //change directory to your liking
 //This line does not give an error if your adress is non-existent
-std::string file_name = "2body" + integrator;
+std::string file_name = "3body" + integrator + "_delta="+ scientific_format(delta, 1, 1);
 if (adaptive== true){
-     file_name = file_name + "_adaptive_eta=" + scientific_format(eta, 1, 1);
+     file_name = file_name + "_adaptive_eta=" +scientific_format(eta, 1, 1);
 }
 else{
-     file_name =file_name + "_" + int_to_str(step_size_rel_to_orbit)+ "_steps_per_Orbit";
+    file_name = file_name + "_" + int_to_str(step_size_rel_to_orbit)+ "_steps_per_Orbit";
 }
 std::string file_end = ".txt";
 std::string file = file_dir + file_name +file_end;
@@ -69,8 +75,8 @@ std::string file = file_dir + file_name +file_end;
 ofile.open(file);
 //initialize time t to zero
 double t=0.;
-// save to file data: t p1 x_1 y_1 z_1 vx_1 vy_1 vz_1 p2 x_2 y_2 z_2 vx_2 vy_2 vz_2 e E a j dt
-
+// save to file data: t #p1 x1 y1 z1 vx1 vy1 vz1 #p2 x2 y2 z2 vx2 vy2 vz_2 #p3 x3 y3 z3 vx3 vy3 vz3 p3 e1 e2 a1 a2 dt
+//a1 is somehow always 0, a2 is not
 for(int i = 0; t<t_max; i++){
      //break when we reach the given max time instead of #iterations, this opens up the adaptable time_step
      //the index i is probably redundant now
@@ -86,41 +92,22 @@ for(int i = 0; t<t_max; i++){
                     << " " << scientific_format(Sosy.planets.at(i_planet).v(2), width, prec);
 
     }
-    ofile  << " "<< scientific_format(Sosy.compute_eccentricity_3body(1), width, prec);
-    ofile  << " "<< scientific_format(Sosy.compute_energy(), width, prec);
-    ofile  << " "<< scientific_format(Sosy.compute_semi_maj_ax_3body(1), width, prec);
-    ofile  << " "<< scientific_format(norm(Sosy.compute_spec_ang_mom_3body(1)), width, prec);
+    ofile  << " "<< scientific_format(Sosy.compute_eccentricity_3body(1), width, prec);  //for m2
+    ofile  << " "<< scientific_format(Sosy.compute_eccentricity_3body(2), width, prec);  //m3
+    //ofile  << " "<< scientific_format(Sosy.compute_energy(), width, prec);
+    ofile  << " "<< scientific_format(Sosy.compute_semi_maj_ax_3body(1), width, prec);  //m2
+    ofile  << " "<< scientific_format(Sosy.compute_semi_maj_ax_3body(2), width, prec); //m3
+    //ofile  << " "<< scientific_format(norm(Sosy.compute_spec_ang_mom()), width, prec);
     ofile  << " "<< scientific_format(h, width, prec); //added timestep to the text file
     ofile  << std::endl;
 
      //calculate variable time_step if appropriate
      if(t!=0){
-          double new_h;
           if (adaptive== true){
-               if (integrator== "LeapFrog"){
-                    if(i==1){
-                         new_h= Sosy.adaptive_time_step_diff_quot(eta, h/2);
-                         //half a step in from 0th to first iteration in h          
-                    }
-                    else{
-                         new_h= Sosy.adaptive_time_step_diff_quot(eta, h);     
-                    }
-               }
-               else{
-                    new_h= Sosy.adaptive_time_step_diff_quot(eta, h);
-               }
-               //calc. variable time step h
-               if (new_h !=0){
-                    if(new_h != eta/h){
-                         h = new_h;
-                         //only use it if it's non-zero, a_dot is non-zero(eta/h) and it's not the first step
-                    }
-               }
-          }
+              double new_h= Sosy.adaptive_time_step_diff_quot(eta, h);
+              h = new_h;          
+          }   
      }
-   
-
-
      
    // Evolve the system integrator of choice 
    if (integrator == "Euler"){
