@@ -10,7 +10,7 @@
 int main(){
 
 
-int step_size_rel_to_orbit = 10000; //50000 
+int step_size_rel_to_orbit = 500; //50000 
 double P = 2*M_PI; //Period P is 2pi for our settings
 double h = P/step_size_rel_to_orbit;
 //timestep h
@@ -37,7 +37,6 @@ double j = 0;
 double width = 7;
 double prec = 7;
 
-//@@ -28,9 +36,10 @@
 System Sosy;
 Sosy.initialize_kepler_orbit_2body(e, a, m1 ,m2);
 Sosy.coord_transf();
@@ -53,7 +52,7 @@ std::string integrator = "RK4";
 // open file .txt to save data
 std::ofstream ofile;
 //ofile.open("test3.txt");
-std::string file_dir ="D:/drive dateien/Uni/Semester_7_WiSe23_24/Astro-F_Praktikum/Chaos/data/";
+std::string file_dir ="./";
 //change directory to your liking
 //This line does not give an error if your adress is non-existent
 std::string file_name = "2body" + integrator;
@@ -94,30 +93,29 @@ for(int i = 0; t<t_max; i++){
     ofile  << std::endl;
 
      //calculate variable time_step if appropriate
-     if(t!=0){
-          double new_h;
-          if (adaptive== true){
-               if (integrator== "LeapFrog"){
-                    if(i==1){
-                         new_h= Sosy.adaptive_time_step_diff_quot(eta, h/2);
-                         //half a step in from 0th to first iteration in h          
-                    }
-                    else{
-                         new_h= Sosy.adaptive_time_step_diff_quot(eta, h);     
-                    }
+     double new_h;
+     if (adaptive== true){
+          if (integrator== "LeapFrog"){
+               if(i==1){
+                    new_h= Sosy.adaptive_time_step(eta/2);//????
+                    //half a step in from 0th to first iteration in h          
                }
                else{
-                    new_h= Sosy.adaptive_time_step_diff_quot(eta, h);
-               }
-               //calc. variable time step h
-               if (new_h !=0){
-                    if(new_h != eta/h){
-                         h = new_h;
-                         //only use it if it's non-zero, a_dot is non-zero(eta/h) and it's not the first step
-                    }
+                    new_h= Sosy.adaptive_time_step(eta);     
                }
           }
+
+          new_h= Sosy.adaptive_time_step(eta);
+          
+          //calc. variable time step h
+          if (new_h !=0.){
+               
+               h = new_h;
+               //only use it if it's non-zero, a_dot is non-zero(eta/h) and it's not the first step
+               
+          }
      }
+     
    
 
 

@@ -37,6 +37,33 @@
     return a;
  }
 
+arma::vec System::compute_jerk(int i){
+
+    arma::vec a_dot = arma::vec(3).fill(0.);
+
+    arma::vec r_i = planets.at(i).r;
+    arma::vec v_i = planets.at(i).v;
+
+    for (int j = 0 ; j < planets.size() ; j++){
+        // def rij & vij
+        arma::vec rij = planets.at(j).r - r_i;
+        arma::vec vij = planets.at(j).v - v_i;
+        // norm of rij
+        double r = arma::norm(rij);
+
+        if (i==j){
+        a_dot += arma::vec(3).fill(0.);
+    }
+        else{
+        a_dot += G*planets.at(j).m*(vij/(r*r*r) - 3*arma::dot(vij, rij)*rij/(r*r*r*r*r));
+    }
+    }
+
+    return a_dot;
+
+
+}
+
   double System::compute_energy(){
     double E_kin = 0;
     double E_pot = 0;
@@ -498,6 +525,33 @@ double System::adaptive_time_step_diff_quot(double eta, double h){
             min=eta*abs_a_over_a_dot;
         }
     }
+    return min;
+    //right the timestep becomes massive at eta=3
+}
+
+double System::adaptive_time_step(double eta){
+    //constant eta
+    //prev. timestep h
+    double min;
+    //arbitrarly high number
+    for(int j= 0; j<planets.size(); j++){
+        double abs_a_over_a_dot;
+        double a_dot;
+        double a;
+        // simply a_dot = norm(jerk)
+        a_dot = arma::norm( compute_jerk(j) );
+        a = arma::norm(compute_acceleration(j));
+
+        abs_a_over_a_dot = (a/a_dot);
+
+        if(j==0){
+            min = eta*abs_a_over_a_dot;
+        }
+        else if(eta*abs_a_over_a_dot <min){
+            min=eta*abs_a_over_a_dot;
+        }
+    }
+
     return min;
     //right the timestep becomes massive at eta=3
 }

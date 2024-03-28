@@ -21,6 +21,7 @@ public:
 
     // computing accelaration on the jth planet
     arma::vec compute_acceleration(int j);
+    arma::vec compute_jerk(int j);
     double compute_energy();
     void coord_transf(); 
     //arma::vec compute_tot_spec_ang_mom();
@@ -40,6 +41,8 @@ public:
     void initialize_kepler_orbit_2body(double e, double a, double m1, double m2);
     void initialize_kepler_orbit_3body(double e, double a1, double a2, double m1, double m2, double m3);
     double adaptive_time_step_diff_quot(double eta, double h);
+    double adaptive_time_step(double eta);
+
 };
 
 

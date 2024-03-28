@@ -33,7 +33,7 @@ double prec = 7;
 // create a system Sosy
 System Sosy;
 
-Sosy.initialize_kepler_orbit(e, a, m1 ,m2);
+Sosy.initialize_kepler_orbit_2body(e, a, m1 ,m2);
 Sosy.coord_transf();
 
 
@@ -55,10 +55,10 @@ for(int i = 0; i < iter ; i++){
                     << " " << scientific_format(Sosy.planets.at(i_planet).v(2), width, prec);
 
     }
-    ofile  << " "<< scientific_format(Sosy.compute_eccentricity(), width, prec);
+    ofile  << " "<< scientific_format(Sosy.compute_eccentricity_2body(), width, prec);
     ofile  << " "<< scientific_format(Sosy.compute_energy(), width, prec);
-    ofile  << " "<< scientific_format(Sosy.compute_semi_maj_ax(), width, prec);
-    ofile  << " "<< scientific_format(norm(Sosy.compute_spec_ang_mom()), width, prec);
+    ofile  << " "<< scientific_format(Sosy.compute_semi_maj_ax_2body(), width, prec);
+    ofile  << " "<< scientific_format(norm(Sosy.compute_spec_ang_mom_2body()), width, prec);
     ofile  << std::endl;
 
    // Evolve the system with Euler 
