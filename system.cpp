@@ -475,7 +475,7 @@ void System::initialize_kepler_orbit_3body(double e, double a1, double a2, doubl
         arma::vec v = arma::vec(3);
         add_planet(m1, r, v);
         add_planet(m2, r, v);
-        add_planet(m2, r, v);
+        add_planet(m3, r, v);
         planets.at(0).r = arma::vec(3).fill(0.);
         planets.at(0).v = arma::vec(3).fill(0.);
 
@@ -490,7 +490,7 @@ void System::initialize_kepler_orbit_3body(double e, double a1, double a2, doubl
         planets.at(2).r(1) = 0;
         planets.at(2).r(2) = 0;
         planets.at(2).v(0) = 0;
-        planets.at(2).v(1) = -sqrt((G*(m1 + m2)/a2)*((1-e)/(1+e)));
+        planets.at(2).v(1) = -sqrt((G*(m1 + m3)/a2)*((1-e)/(1+e)));
         planets.at(2).v(2) = 0;
 
         //change signs in coords & velocity to have them opposite of each other
