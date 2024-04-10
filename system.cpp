@@ -465,8 +465,8 @@ void System::initialize_kepler_orbit_2body(double e, double a, double m1, double
         planets.at(1).v(2) = 0;
 
         //initialize prev_accel as 0
-        planets.at(0).a_prev = arma::vec(3).fill(0.);
-        planets.at(1).a_prev = arma::vec(3).fill(0.);
+       //planets.at(0).a_prev = arma::vec(3).fill(0.);
+        //planets.at(1).a_prev = arma::vec(3).fill(0.);
 
     }
 
@@ -554,4 +554,17 @@ double System::adaptive_time_step(double eta){
 
     return min;
     //right the timestep becomes massive at eta=3
+}
+
+int System::count_close_encounters(int count){
+    double dist = 0;
+    double rh = 0;
+    double mu = planets.at(2).m/planets.at(0).m;
+    dist = norm(planets.at(1).r - planets.at(2).r);
+    rh = compute_semi_maj_ax_3body(2)*std::cbrt(mu/3);
+        if (dist < rh)
+        {
+            count += 1;
+        }
+    return count;
 }

@@ -43,6 +43,7 @@ public:
     double adaptive_time_step_diff_quot(double eta, double h);
     double adaptive_time_step(double eta);
 
+    int count_close_encounters(int count);
 };
 
 
