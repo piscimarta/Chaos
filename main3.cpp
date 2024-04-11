@@ -15,7 +15,7 @@ double h = P/step_size_rel_to_orbit;
 //timestep h
 //even if timestep is adaptive, this is the initial step
 
-int num_orbits = 10;  //should be 
+int num_orbits = 1000;  //should be 1000
 double t_max = num_orbits*P;  //10*2pi = 10 orbits
 
 int iter = (int) t_max/h;
@@ -24,15 +24,27 @@ int iter = (int) t_max/h;
 
 // planet parameters 
 double m1 = 1;
-double m2 = 1e-3;
+double m2 = 1e-5; //both masses should be 10^-5, but first one was 10^-3
 double mu2 = m2/m1;   //mass ratio
 double m3= 1e-5;
 double mu3 = m3/m1;
 double e = 0;
 double a1 = 1;
-double delta =0.01*a1;
-double a2 = a1 + delta;
 
+//Debugging
+// //double power = pow (mu2+ mu3, 1.0/3.0);
+// double power_2 = pow(2, 3);  //Das tut
+// double power_3 = pow(8, 1.0/3.0); // Das tut auch
+// double power_4 = pow(mu2 +mu3, 1); // Das tut n
+double delta_crit =  2.4 * pow( mu2 + mu3, 1.0/ 3.0);
+
+double delta =0.97;    //play with this parameter; 0.97-1.00
+int eta_per_orbit = 200; // and this one:    50; 200
+double a2 = a1 + delta*delta_crit;
+
+std::cout <<"Delta_crit = " + scientific_format(delta_crit, 4, 4);
+double R_Hill_m2 = a2 * pow(mu2 / 3, 1.0 / 3.0);  //R_hill = a*(mu/3)^(1/3)
+//Do we need a close encounter tracker?
 
 // system parameters
 double j = 0; //spec. ang mom, not needed in this exercise
@@ -48,7 +60,7 @@ Sosy.initialize_kepler_orbit_3body(e, a1, a2, m1 , m2, m3);
 Sosy.coord_transf();
 
 
-double eta = 0.001;
+double eta = P/eta_per_orbit;
 //constant for calculation of adaptive time step, could be dependent on Period P
 
 //fixed time_step or adaptive?
@@ -59,12 +71,12 @@ std::string integrator = "RK4";
 // open file .txt to save data
 std::ofstream ofile;
 //ofile.open("test3.txt");
-std::string file_dir ="D:/drive dateien/Uni/Semester_7_WiSe23_24/Astro-F_Praktikum/Chaos/data/";
+std::string file_dir ="D:/drive dateien/Uni/Semester_7_WiSe23_24/Astro-F_Praktikum/Chaos/data/3body/";
 //change directory to your liking
-//This line does not give an error if your adress is non-existent
-std::string file_name = "3body" + integrator + "_delta="+ scientific_format(delta, 1, 1);
+//This line does not give an error if your adress is non-existent/wrong
+std::string file_name = "3body" + integrator + "_delta="+ scientific_format(delta, 2, 2) +"delta_crit";
 if (adaptive== true){
-     file_name = file_name + "_adaptive_eta=" +scientific_format(eta, 1, 1);
+     file_name = file_name + "_adaptive_P_over_eta=" + int_to_str(eta_per_orbit);
 }
 else{
     file_name = file_name + "_" + int_to_str(step_size_rel_to_orbit)+ "_steps_per_Orbit";
@@ -75,11 +87,11 @@ std::string file = file_dir + file_name +file_end;
 ofile.open(file);
 //initialize time t to zero
 double t=0.;
-// save to file data: t #p1 x1 y1 z1 vx1 vy1 vz1 #p2 x2 y2 z2 vx2 vy2 vz_2 #p3 x3 y3 z3 vx3 vy3 vz3 p3 e1 e2 a1 a2 dt
+// save to file data: t #p1 x1 y1 z1 vx1 vy1 vz1 #p2 x2 y2 z2 vx2 vy2 vz_2 #p3 x3 y3 z3 vx3 vy3 vz3 e1 e2 a1 a2 dt
 //a1 is somehow always 0, a2 is not
 for(int i = 0; t<t_max; i++){
      //break when we reach the given max time instead of #iterations, this opens up the adaptable time_step
-     //the index i is probably redundant now
+
      ofile  << scientific_format(t, width, prec);
 
      for(int i_planet = 0 ; i_planet < Sosy.planets.size(); i_planet++){
@@ -101,13 +113,26 @@ for(int i = 0; t<t_max; i++){
     ofile  << " "<< scientific_format(h, width, prec); //added timestep to the text file
     ofile  << std::endl;
 
+     if (Sosy.detect_close_encounter(R_Hill_m2) == true){
+         // print("Close encounter detected at t= " +scientific_format(t, 1, 1));
+          std::cout << "Close encounter detected at t= " +scientific_format(t, 1, 1);
+          std::cout << "after " + scientific_format(t/P, 1, 1) + " orbits ";
+          std::cout <<"after " + int_to_str(i) + " iterations";
+          
+          break;
+               //the simulation should now stop once we detect a close encounter
+     }
+     //if you do not want to stop just comment the previous paragraph out
+
      //calculate variable time_step if appropriate
      if(t!=0){
           if (adaptive== true){
-              double new_h= Sosy.adaptive_time_step_diff_quot(eta, h);
+              double new_h= Sosy.adaptive_time_step(eta);
+              //change between: adaptive_time_step_diff_quot(eta, h/2) and adaptive_time_step(eta)
               h = new_h;          
           }   
      }
+
      
    // Evolve the system integrator of choice 
    if (integrator == "Euler"){
