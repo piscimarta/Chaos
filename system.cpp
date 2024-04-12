@@ -290,23 +290,35 @@ void System::evolveLeapFrog(double h, int i, int N){
         }
         planets =evolved_planets;
 
-        //loop for updating v
-        for(int j=0; j<planets.size(); j++){
-            // calc a_1/2 = a (t_1/2, r_1/2)
-            a= compute_acceleration(j);
-            v_new = planets.at(j).v +a*h;
-            //v_1 = v_0 + a_(1/2) *h
-            //now calculate velocities with updated coordinates
-            //here we also do not need intermediate steps
-            planets.at(j).v =v_new;
-        }
+        // //loop for updating v
+        // for(int j=0; j<planets.size(); j++){
+        //     // calc a_1/2 = a (t_1/2, r_1/2)
+        //     a= compute_acceleration(j);
+        //     v_new = planets.at(j).v +a*h;
+        //     //v_1 = v_0 + a_(1/2) *h
+        //     //now calculate velocities with updated coordinates
+        //     //here we also do not need intermediate steps
+        //     planets.at(j).v =v_new;
+        // }
     }
 
     else if (i>0 && i<N-1){
+        
+        //loop for v
+        for(int j =0; j<planets.size(); j++){
+            a = compute_acceleration(j); //a_(i+1/2)
+            v_new = planets.at(j).v + a *h;
+            //v_i = v_(i-1)         + a_(i-1/2) *h
+            //v_i =v[i] in array
+            planets.at(j).v = v_new;
+        }
+
+
+        
         //loop for r and a_prev
         for(int j =0; j<planets.size(); j++){
-            a= compute_acceleration(j);
-            p.a_prev = a;
+            //a= compute_acceleration(j);
+            //p.a_prev = a;
             //save the previous acc. before updating r
             r_new = planets.at(j).r + planets.at(j).v *h;
             //r_(i-1/2) = r_(i+1-1/2) + v_(i+1)*h
@@ -318,7 +330,10 @@ void System::evolveLeapFrog(double h, int i, int N){
             //need to save the updated planets in intermediate vector bc otherwise it would change a_prev
         }
         planets = evolved_planets;
-        //again: update all pos. first, then accel.->velocity
+        
+    }
+
+    else{  // i=N-1, last step
         //loop for v
         for(int j =0; j<planets.size(); j++){
             a = compute_acceleration(j); //a_(i+1/2)
@@ -327,18 +342,26 @@ void System::evolveLeapFrog(double h, int i, int N){
             //v_i =v[i] in array
             planets.at(j).v = v_new;
         }
+
+
+        
+        //loop for r and a_prev
+        for(int j =0; j<planets.size(); j++){
+            //a= compute_acceleration(j);
+            //p.a_prev = a;
+            //save the previous acc. before updating r
+            r_new = planets.at(j).r + planets.at(j).v *h/2;
+            //r_(i-1/2) = r_(i+1-1/2) + v_(i+1)*h
+            //r_(i-1/2) = r[i] in array
+            p.r = r_new;
+            p.v = planets.at(j).v;
+            p.m = planets.at(j).m;
+            evolved_planets.push_back(p);
+            //need to save the updated planets in intermediate vector bc otherwise it would change a_prev
+        }
+        planets = evolved_planets;
     }
 
-    else{  // i=N-1, last step, only pos update
-    //this condition is difficult to do with an adaptable timestep
-    //to calculate the timestep we need to calculate the acc
-        for(int j=0; j<planets.size(); j++){
-            r_new = planets.at(j).r + planets.at(j).v *h/2;
-            //  //r_(n+1) = r_(n+1/2) + v_(n+1) * h/2
-            planets.at(j).r =r_new;
-        }
-    }
-    //planets = evolved_planets;
 }
 
 

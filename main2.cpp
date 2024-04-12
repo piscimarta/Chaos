@@ -10,7 +10,7 @@
 int main(){
 
 
-int step_size_rel_to_orbit = 500; //50000 
+int step_size_rel_to_orbit = 1000; //50000 
 double P = 2*M_PI; //Period P is 2pi for our settings
 double h = P/step_size_rel_to_orbit;
 //timestep h
@@ -46,8 +46,8 @@ double eta = 0.001;
 //constant for calculation of adaptive time step, could be dependent on Period P
 
 //fixed time_step or adaptive?
-bool adaptive = true;
-std::string integrator = "RK4";
+bool adaptive = false;
+std::string integrator = "LeapFrog";
 //pay close attention to the spelling of the string
 // open file .txt to save data
 std::ofstream ofile;
@@ -70,7 +70,7 @@ ofile.open(file);
 double t=0.;
 // save to file data: t p1 x_1 y_1 z_1 vx_1 vy_1 vz_1 p2 x_2 y_2 z_2 vx_2 vy_2 vz_2 e E a j dt
 
-for(int i = 0; t<t_max; i++){
+for(int i = 0; i<iter; i++){
      //break when we reach the given max time instead of #iterations, this opens up the adaptable time_step
      //the index i is probably redundant now
      ofile  << scientific_format(t, width, prec);
@@ -97,8 +97,7 @@ for(int i = 0; t<t_max; i++){
      if (adaptive== true){
           if (integrator== "LeapFrog"){
                if(i==1){
-                    new_h= Sosy.adaptive_time_step(eta/2);//????
-                    //half a step in from 0th to first iteration in h          
+                    new_h= Sosy.adaptive_time_step(eta/2);       
                }
                else{
                     new_h= Sosy.adaptive_time_step(eta);     
@@ -128,13 +127,12 @@ for(int i = 0; t<t_max; i++){
         Sosy.evolveEulerCromer(h);
    }
    else if (integrator == "LeapFrog"){
-          if(t+h > t_max){
+          if( i == iter-1){
                Sosy.evolveLeapFrog(h, iter-1, iter);       
           }
           else{
                Sosy.evolveLeapFrog(h, i, iter);
           }
-        //ignore last step? gets pretty complicated
    }
    else if (integrator == "RK4"){
         Sosy.evolve_RK4(h);

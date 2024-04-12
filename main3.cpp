@@ -89,7 +89,7 @@ ofile.open(file);
 double t=0.;
 // save to file data: t #p1 x1 y1 z1 vx1 vy1 vz1 #p2 x2 y2 z2 vx2 vy2 vz_2 #p3 x3 y3 z3 vx3 vy3 vz3 e1 e2 a1 a2 dt
 //a1 is somehow always 0, a2 is not
-for(int i = 0; t<t_max; i++){
+for(int i = 0; i < iter; i++){
      //break when we reach the given max time instead of #iterations, this opens up the adaptable time_step
 
      ofile  << scientific_format(t, width, prec);
@@ -142,7 +142,7 @@ for(int i = 0; t<t_max; i++){
         Sosy.evolveEulerCromer(h);
    }
    else if (integrator == "LeapFrog"){
-          if(t+h > t_max){
+          if( i == iter-1){
                Sosy.evolveLeapFrog(h, iter-1, iter);       
           }
           else{
