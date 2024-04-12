@@ -38,17 +38,17 @@ double a1 = 1;
 // double power_4 = pow(mu2 +mu3, 1); // Das tut n
 double delta_crit =  2.4 * pow( mu2 + mu3, 1.0/ 3.0);
 
-double delta =0.97;    //play with this parameter; 0.97-1.00
+double delta =0.97;    //play with this percentage parameter; 0.97-1.03
 int eta_per_orbit = 200; // and this one:    50; 200
 double a2 = a1 + delta*delta_crit;
 
-std::cout <<"Delta_crit = " + scientific_format(delta_crit, 4, 4);
+std::cout <<"Delta_crit = " + scientific_format(delta_crit, 4, 4) + "\n";
+std::cout <<"Current Delta = " + scientific_format(delta*delta_crit, 4, 4) + "\n";
 double R_Hill_m2 = a2 * pow(mu2 / 3, 1.0 / 3.0);  //R_hill = a*(mu/3)^(1/3)
-//Do we need a close encounter tracker?
 
 // system parameters
 double j = 0; //spec. ang mom, not needed in this exercise
-
+int count = 0;
 
 // printing parameters
 double width = 7;
@@ -113,11 +113,11 @@ for(int i = 0; i < iter; i++){
     ofile  << " "<< scientific_format(h, width, prec); //added timestep to the text file
     ofile  << std::endl;
 
-     if (Sosy.detect_close_encounter(R_Hill_m2) == true){
+     if (Sosy.count_close_encounters(count) == 1){
          // print("Close encounter detected at t= " +scientific_format(t, 1, 1));
-          std::cout << "Close encounter detected at t= " +scientific_format(t, 1, 1);
-          std::cout << "after " + scientific_format(t/P, 1, 1) + " orbits ";
-          std::cout <<"after " + int_to_str(i) + " iterations";
+          std::cout << "\nClose encounter detected at t= " +scientific_format(t, 1, 1);
+          std::cout << "\nafter " + scientific_format(t/P, 1, 1) + " orbits ";
+          std::cout <<"\nafter " + int_to_str(i) + " iterations\n";
           
           break;
                //the simulation should now stop once we detect a close encounter
