@@ -38,17 +38,17 @@ double a1 = 1;
 // double power_4 = pow(mu2 +mu3, 1); // Das tut n
 double delta_crit =  2.4 * pow( mu2 + mu3, 1.0/ 3.0);
 
-double delta =0.97;    //play with this percentage parameter; 0.97-1.03
+double delta =0.97;    //play with this parameter; 0.97-1.00
 int eta_per_orbit = 200; // and this one:    50; 200
 double a2 = a1 + delta*delta_crit;
 
-std::cout <<"Delta_crit = " + scientific_format(delta_crit, 4, 4) + "\n";
-std::cout <<"Current Delta = " + scientific_format(delta*delta_crit, 4, 4) + "\n";
+std::cout <<"Delta_crit = " + scientific_format(delta_crit, 4, 4);
 double R_Hill_m2 = a2 * pow(mu2 / 3, 1.0 / 3.0);  //R_hill = a*(mu/3)^(1/3)
+//Do we need a close encounter tracker?
 
 // system parameters
 double j = 0; //spec. ang mom, not needed in this exercise
-int count = 0;
+
 
 // printing parameters
 double width = 7;
@@ -89,7 +89,7 @@ ofile.open(file);
 double t=0.;
 // save to file data: t #p1 x1 y1 z1 vx1 vy1 vz1 #p2 x2 y2 z2 vx2 vy2 vz_2 #p3 x3 y3 z3 vx3 vy3 vz3 e1 e2 a1 a2 dt
 //a1 is somehow always 0, a2 is not
-for(int i = 0; i < iter; i++){
+for(int i = 0; t<t_max; i++){
      //break when we reach the given max time instead of #iterations, this opens up the adaptable time_step
 
      ofile  << scientific_format(t, width, prec);
@@ -113,11 +113,11 @@ for(int i = 0; i < iter; i++){
     ofile  << " "<< scientific_format(h, width, prec); //added timestep to the text file
     ofile  << std::endl;
 
-     if (Sosy.count_close_encounters(count) == 1){
+     if (Sosy.detect_close_encounter(R_Hill_m2) == true){
          // print("Close encounter detected at t= " +scientific_format(t, 1, 1));
-          std::cout << "\nClose encounter detected at t= " +scientific_format(t, 1, 1);
-          std::cout << "\nafter " + scientific_format(t/P, 1, 1) + " orbits ";
-          std::cout <<"\nafter " + int_to_str(i) + " iterations\n";
+          std::cout << "Close encounter detected at t= " +scientific_format(t, 1, 1);
+          std::cout << "after " + scientific_format(t/P, 1, 1) + " orbits ";
+          std::cout <<"after " + int_to_str(i) + " iterations";
           
           break;
                //the simulation should now stop once we detect a close encounter
@@ -128,7 +128,6 @@ for(int i = 0; i < iter; i++){
      if(t!=0){
           if (adaptive== true){
               double new_h= Sosy.adaptive_time_step(eta);
-              //change between: adaptive_time_step_diff_quot(eta, h/2) and adaptive_time_step(eta)
               h = new_h;          
           }   
      }
@@ -142,7 +141,7 @@ for(int i = 0; i < iter; i++){
         Sosy.evolveEulerCromer(h);
    }
    else if (integrator == "LeapFrog"){
-          if( i == iter-1){
+          if(t+h > t_max){
                Sosy.evolveLeapFrog(h, iter-1, iter);       
           }
           else{
