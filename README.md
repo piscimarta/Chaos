@@ -1,3 +1,5 @@
+<img align="right" width=20% src="logo.gif" />
+
 ## Building
 
 Clone this repo with
